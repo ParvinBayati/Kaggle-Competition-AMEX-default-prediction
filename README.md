@@ -62,6 +62,12 @@ To ensure robust local evaluation and prevent data leakage:
 
 ### Final Score
 The models were evaluated using the unique AMEX competition metric (the mean of the Normalized Gini Coefficient and the default capture rate at 4%).
+| Model | 5-Fold OOF CV Score | Public Leaderboard | Status |
+| :--- | :---: | :---: | :---: |
+| Baseline LightGBM | 0.782 | 0.781 | Completed |
+| **Optimized XGBoost** | **0.794** | **0.793** | **Best Model** |
+| CatBoost | 0.789 | 0.788 | Completed |
+
 
 | Output Feature | Final Submission |
 | :--- | :---: | 
@@ -75,10 +81,6 @@ The models were evaluated using the unique AMEX competition metric (the mean of 
 
 ---
 
-## 📈 Visualizations
-*(Uncomment and update the file paths below once you save your plot images to the repository)*
-
----
 
 ## 💻 Instructions for Running the Code
 
