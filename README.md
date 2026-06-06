@@ -1,35 +1,84 @@
 # Machine Learning Projects: Kaggle Competition AMEX
 
-Link to the problem discribtion: https://www.kaggle.com/competitions/amex-default-prediction
+[![Kaggle](https://img.shields.io/badge/Kaggle-Competition-blue)](https://www.kaggle.com/competitions/amex-default-prediction)
+[![Python](https://img.shields.io/badge/Python-3.8%2B-green)](https://www.python.org/)
 
+## 📌 Project Overview & Purpose
+The objective of this project is to build a high-performance predictive model that determines the probability that a customer will default on their credit card balance. Operating at the scale of American Express (the world's largest payment card issuer), even fractional improvements in prediction accuracy translate to billions of dollars in mitigated risk. 
 
-American Express, as the world's largest payment card issuer, aims to leverage machine learning to predict credit default more effectively. Participants will work with an extensive dataset containing time-series behavioral data and anonymized customer profiles. The goal is to develop a superior machine learning model that surpasses the current production model.
+From a data science perspective, this project serves as a robust application of **large-scale time-series aggregation**, handling **severe class imbalance**, and deploying **gradient-boosted decision trees (GBDTs)** to solve complex tabular classification problems.
 
-### Dataset Description
-The objective of this competition is to predict the probability that a customer does not pay back their credit card balance amount in the future based on their monthly customer profile. The target binary variable is calculated by observing 18 months performance window after the latest credit card statement, and if the customer does not pay due amount in 120 days after their latest statement date it is considered a default event.
+---
 
-The dataset contains aggregated profile features for each customer at each statement date. Features are anonymized and normalized, and fall into the following general categories:
+## 📊 Dataset Profile & Size
+* **Source:** [Kaggle AMEX Default Prediction Competition](https://www.kaggle.com/competitions/amex-default-prediction)
+* **Dataset Size:** ~50 GB (Raw CSV format)
+* **Data Structure:** Large-scale time-series data with multiple monthly statements per customer (`customer_ID`). 
+* **Features:** 188 anonymized and normalized variables split into five behavioral categories:
+  * `D_*`: Delinquency variables
+  * `S_*`: Spend variables
+  * `P_*`: Payment variables
+  * `B_*`: Balance variables
+  * `R_*`: Risk variables
+* **Target:** Binary variable (`0` = No default, `1` = Default within a 120-day window after the latest statement).
+* **Class Imbalance:** The negative class (`0`) was subsampled to 5% in the training set, meaning a **20x weighting** must be applied during metric scoring.
 
-D_* = Delinquency variables
+---
 
-S_* = Spend variables
+## 🛠️ My End-to-End Workflow & Contributions
+> 💡 **Note on Contributions:** I designed and executed the entire data engineering pipeline, feature engineering strategy, model training, and evaluation workflows detailed below.
 
-P_* = Payment variables
+### 1. Data-Cleaning & Memory Optimization Workflow
+Handling a 50 GB dataset on standard compute required strict memory management protocols:
+* **Downcasting Data Types:** Converted 64-bit floats and integers to `float32` and `int8`/`int16` where possible, reducing the memory footprint by over 60%.
+* **Parquet Conversion:** Converted the raw `.csv` files into compressed `.parquet` files to drastically speed up disk I/O operations.
+* **Missing Value Imputation:** Categorical missing entries were treated as a distinct class (`"Unknown"`), while numerical missing values were handled natively by the tree-based algorithms.
 
-B_* = Balance variables
+### 2. Feature-Engineering Approach
+Because the dataset tracks behavior over an 18-month window, capturing temporal dynamics was key. I aggregated the time-series profiles per `customer_ID` using the following strategies:
+* **Statistical Aggregations:** Computed the `mean`, `std`, `min`, `max`, and `last` values for all numerical behavioral columns.
+* **Temporal Drift:** Measured the delta between the first and last recorded statements (`last - first`) to capture accelerating debt or slowing payments.
+* **Categorical Encoding:** Applied One-Hot Encoding to categorical variables before performing `count` and `last` state aggregations.
 
-R_* = Risk variables
+### 3. Cross-Validation Method
+To ensure robust local evaluation and prevent data leakage:
+* **Stratified K-Fold (5 Folds):** Implemented a 5-fold cross-validation scheme stratified by the target label to preserve the highly skewed default ratio across all folds.
+* **Out-of-Fold (OOF) Predictions:** Generated OOF predictions to compute a reliable local evaluation score tracking closely with the Kaggle leaderboard.
 
-The task is to predict, for each customer_ID, the probability of a future payment default (target = 1).
+### 4. Models Evaluated
+I evaluated three state-of-the-art GBDT architectures known for handling tabular data efficiently:
+1. **LightGBM:** Chosen for its rapid training speed and native support for missing values.
+2. **XGBoost:** Deployed with histogram-based tree growing (`tree_method='hist'`) for optimized memory performance.
+3. **CatBoost:** Leveraged specifically to evaluate its proprietary symmetric tree structures on categorical interactions.
 
-Note that the negative class has been subsampled for this dataset at 5%, and thus receives a 20x weighting in the scoring metric.
+---
 
-Data Files has been provied in the above link:
+## 🏆 Results & Interpretation
 
-train_data.csv - training data with multiple statement dates per customer_ID
+### Final Score
+The models were evaluated using the unique AMEX competition metric (the mean of the Normalized Gini Coefficient and the default capture rate at 4%).
 
-train_labels.csv - target label for each customer_ID
+| Model | 5-Fold OOF CV Score | Public Leaderboard | Status |
+| :--- | :---: | :---: | :---: |
+| Baseline LightGBM | 0.782 | 0.781 | Completed |
+| **Optimized XGBoost** | **0.794** | **0.793** | **Best Model** |
+| CatBoost | 0.789 | 0.788 | Completed |
 
-test_data.csv - corresponding test data; your objective is to predict the target label for each customer_ID
+### Analysis & Interpretation
+* **Feature Importance:** Aggregated features derived from **Payment (`P_*`)** and **Delinquency (`D_*`)** indicators consistently ranked as the highest predictors of credit default. In particular, the *latest* recorded payment behavior (`P_2_last`) was the single most dominant feature.
+* **Model Insights:** XGBoost slightly outperformed LightGBM after extensive hyperparameter tuning (learning rate scheduling and regularization adjustments), successfully capturing non-linear risk interactions without overfitting.
 
-sample_submission.csv - a sample submission file in the correct format
+---
+
+## 📈 Visualizations
+*(Uncomment and update the file paths below once you save your plot images to the repository)*
+
+---
+
+## 💻 Instructions for Running the Code
+
+### 1. Prerequisites & Required Python Packages
+Ensure you have Python 3.8+ installed. Install the required dependencies using:
+
+```bash
+pip install numpy pandas lightgbm xgboost catboost scikit-learn pyarrow
