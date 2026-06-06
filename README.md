@@ -35,11 +35,13 @@ Handling a 50 GB dataset on standard compute required strict memory management p
 * **Missing Value Imputation:** Categorical missing entries were treated as a distinct class (`"Unknown"`), while numerical missing values were handled natively by the tree-based algorithms.
 
 ### 2. Feature-Engineering Approach
-Because the dataset tracks behavior over an 18-month window, capturing temporal dynamics was key. I aggregated the time-series profiles per `customer_ID` using the following strategies:
-* **Statistical Aggregations:** Computed the `mean`, `std`, `min`, `max`, and `last` values for all numerical behavioral columns.
-* **Temporal Drift:** Measured the delta between the first and last recorded statements (`last - first`) to capture accelerating debt or slowing payments.
-* **Categorical Encoding:** Applied One-Hot Encoding to categorical variables before performing `count` and `last` state aggregations.
-
+Beyond using raw behavioral data, I engineered two primary categories of meta-features:
+* **Statistical Distribution Triggers (Within-Category Deviation):**
+  * Grouped features within the **Delinquency (`D_*`)** and **Balance (`B_*`)** blocks to calculate a dynamic boundary based on standard deviation and mean offsets ($\mu \pm 0.4\sigma$ and $\mu + 1\sigma$).
+  * Formulated index counts tracking how many individual variables for a single customer crossed above or below those custom thresholds (`count_D_up`, `count_D_down`, etc.).
+* **Custom Interaction Features (`combine_label`):**
+  * Designed and programmed an automated algorithmic class (`combine_label`) that normalizes and projects interaction pairs between a dominant column (e.g., `S_22`) and all other structural numerical elements into a discrete matrix map using 100 specific bins.
+    
 ### 3. Cross-Validation Method
 To ensure robust local evaluation and prevent data leakage:
 * **Stratified K-Fold (5 Folds):** Implemented a 5-fold cross-validation scheme stratified by the target label to preserve the highly skewed default ratio across all folds.
