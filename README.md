@@ -42,16 +42,19 @@ Beyond using raw behavioral data, I engineered two primary categories of meta-fe
 * **Custom Interaction Features (`combine_label`):**
   * Designed and programmed an automated algorithmic class (`combine_label`) that normalizes and projects interaction pairs between a dominant column (e.g., `S_22`) and all other structural numerical elements into a discrete matrix map using 100 specific bins.
     
-### 3. Cross-Validation Method
-To ensure robust local evaluation and prevent data leakage:
-* **Stratified K-Fold (5 Folds):** Implemented a 5-fold cross-validation scheme stratified by the target label to preserve the highly skewed default ratio across all folds.
-* **Out-of-Fold (OOF) Predictions:** Generated OOF predictions to compute a reliable local evaluation score tracking closely with the Kaggle leaderboard.
+### 3. Model Split & Training Strategy
+* **Data Partitioning:** Leveraged a shuffled `train_test_split` allocating **75%** of the records for structural training (344,184 profiles) and **25%** for local validation evaluation (114,729 profiles).
+* **Algorithm Implemented:** Trained a standalone **LightGBM Classifier (`LGBMClassifier`)** configured with DART boosting to handle sparse tabular configurations over 10,500 boosting rounds.
 
 ### 4. Models Evaluated
 I evaluated three state-of-the-art GBDT architectures known for handling tabular data efficiently:
 1. **LightGBM:** Chosen for its rapid training speed and native support for missing values.
 2. **XGBoost:** Deployed with histogram-based tree growing (`tree_method='hist'`) for optimized memory performance.
 3. **CatBoost:** Leveraged specifically to evaluate its proprietary symmetric tree structures on categorical interactions.
+
+### 5. Cross-Validation Method
+To ensure robust local evaluation and prevent data leakage:
+* **Stratified K-Fold (5 Folds):** Implemented a 5-fold cross-validation scheme stratified by the target label to preserve the highly skewed default ratio across all folds.
 
 ---
 
@@ -60,11 +63,11 @@ I evaluated three state-of-the-art GBDT architectures known for handling tabular
 ### Final Score
 The models were evaluated using the unique AMEX competition metric (the mean of the Normalized Gini Coefficient and the default capture rate at 4%).
 
-| Model | 5-Fold OOF CV Score | Public Leaderboard | Status |
-| :--- | :---: | :---: | :---: |
-| Baseline LightGBM | 0.782 | 0.781 | Completed |
-| **Optimized XGBoost** | **0.794** | **0.793** | **Best Model** |
-| CatBoost | 0.789 | 0.788 | Completed |
+| Output Feature | Final Submission |
+| :--- | :---: | 
+| Mean Predicted Probability | 0.2542 |
+|Standard Deviation ($\sigma$) | 0.3632|
+| Median Prediction (50%) | 0.0171 |
 
 ### Analysis & Interpretation
 * **Feature Importance:** Aggregated features derived from **Payment (`P_*`)** and **Delinquency (`D_*`)** indicators consistently ranked as the highest predictors of credit default. In particular, the *latest* recorded payment behavior (`P_2_last`) was the single most dominant feature.
